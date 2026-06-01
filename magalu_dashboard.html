@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Magalu HQ · Dashboard de Vendas FY26</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Hello','Segoe UI',sans-serif;background:#f2f2f7;color:#1c1c1e;display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:210px;background:#1c1c1e;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;box-shadow:2px 0 12px rgba(0,0,0,0.2)}
+.sidebar-hdr{padding:16px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.sidebar-logo{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.4)}
+.sidebar-title{font-size:13px;font-weight:800;color:white;margin-top:2px}
+.sidebar-nav{display:flex;flex-direction:column;padding:8px 0;gap:2px;overflow-y:auto}
+.tab-btn{width:100%;padding:0;border:none;background:transparent;cursor:pointer;transition:all 0.18s;text-align:left;border-radius:0;border-left:3px solid transparent}
+.tab-btn:hover{background:rgba(255,255,255,0.07)}
+.tab-btn.active{background:rgba(0,113,227,0.22);border-left:3px solid #0071e3}
+.tab-btn-inner{display:flex;align-items:center;gap:10px;padding:10px 14px}
+.tab-icon{width:30px;height:30px;background:#4285f4;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:white;flex-shrink:0}
+.tab-label{display:flex;flex-direction:column}
+.tab-name{font-size:11px;font-weight:700;color:white;white-space:nowrap}
+.tab-sub{font-size:10px;color:rgba(255,255,255,0.4);margin-top:1px}
+.tab-btn.active .tab-name{color:#60aaff}
+.sidebar-divider{height:1px;background:rgba(255,255,255,0.08);margin:6px 12px}
+
+/* MES BAR */
+.mes-bar{position:fixed;top:0;left:210px;right:0;height:48px;background:white;border-bottom:1px solid #e5e5ea;display:flex;align-items:center;padding:0 24px;gap:8px;z-index:99;box-shadow:0 1px 6px rgba(0,0,0,0.06)}
+.mes-bar-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#8e8e93;margin-right:4px}
+.mes-btn{height:30px;padding:0 16px;border-radius:20px;border:1px solid #e5e5ea;background:white;cursor:pointer;font-size:12px;font-weight:600;color:#6e6e73;transition:all 0.2s}
+.mes-btn:hover{border-color:#0071e3;color:#0071e3}
+.mes-btn.active{background:#0071e3;color:white;border-color:#0071e3}
+
+/* MAIN */
+.main{margin-left:210px;margin-top:48px;padding:24px;flex:1;min-width:0}
+.panel{display:none}.panel.active{display:block}
+
+/* HEADER CARD */
+.dash-header{background:linear-gradient(135deg,#1a73e8 0%,#4285f4 100%);border-radius:16px;padding:22px 28px;color:white;margin-bottom:20px}
+.dash-header-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+.dash-title{font-size:20px;font-weight:800;margin-bottom:4px}
+.dash-sub{font-size:12px;opacity:0.8}
+.dash-badge{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;background:rgba(255,255,255,0.18);padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:8px}
+
+/* BULLETS */
+.bullets{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.bullet{background:white;border-radius:14px;padding:16px;border:1px solid #e5e5ea;position:relative;overflow:hidden}
+.bullet::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.bullet.b1::before{background:#0071e3}
+.bullet.b2::before{background:#34c759}
+.bullet.b3::before{background:#ff9500}
+.bullet.b4::before{background:#af52de}
+.bullet-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#8e8e93;margin-bottom:6px}
+.bullet-val{font-size:26px;font-weight:800;line-height:1;color:#1c1c1e}
+.bullet-sub{font-size:11px;color:#8e8e93;margin-top:4px}
+.bullet-tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:6px}
+.tag-blue{background:#e8f0fe;color:#1a73e8}
+.tag-green{background:#f0fff4;color:#1a6e2a}
+.tag-orange{background:#fff8f0;color:#8a5000}
+.tag-purple{background:#f5f0ff;color:#7c3aed}
+
+/* CHARTS ROW */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.chart-card{background:white;border-radius:14px;border:1px solid #e5e5ea;padding:18px;overflow:hidden}
+.chart-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#6e6e73;margin-bottom:14px}
+.chart-wrap{position:relative;height:280px}
+
+/* TABLE */
+.table-card{background:white;border-radius:14px;border:1px solid #e5e5ea;overflow:hidden;margin-bottom:8px}
+.table-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#6e6e73;padding:14px 16px 10px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead tr{background:#0071e3}
+thead th{color:white;font-size:10px;font-weight:700;text-transform:uppercase;padding:9px 12px;text-align:left}
+thead th:last-child{text-align:right}
+tbody tr{border-bottom:1px solid #f2f2f7}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#f9f9f9}
+tbody td{padding:9px 12px;color:#1c1c1e}
+tbody td:last-child{text-align:right;font-weight:600}
+.rank{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#f2f2f7;border-radius:50%;font-size:10px;font-weight:700;color:#6e6e73;margin-right:6px}
+.rank.gold{background:#ffcc00;color:#6d4c00}
+.rank.silver{background:#c0c0c0;color:#444}
+.rank.bronze{background:#cd7f32;color:white}
+
+.footer{text-align:center;font-size:11px;color:#8e8e93;padding:12px;background:white;border-radius:12px;border:1px solid #e5e5ea;margin-top:4px}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-hdr">
+    <div class="sidebar-logo">Magazine Luiza</div>
+    <div class="sidebar-title">Dashboard FY26</div>
+  </div>
+  <div class="sidebar-nav">
+    <button class="tab-btn active" onclick="showTab('MAGALU-BRASIL',this)">
+      <div class="tab-btn-inner">
+        <div class="tab-icon" style="background:#0071e3">BR</div>
+        <div class="tab-label">
+          <span class="tab-name">MAGALU BRASIL</span>
+          <span class="tab-sub">Total Brasil</span>
+        </div>
+      </div>
+    </button>
+    <button class="tab-btn " onclick="showTab('MAGALU-MG-CO',this)">
+      <div class="tab-btn-inner">
+        <div class="tab-icon" style="background:#34c759">MG</div>
+        <div class="tab-label">
+          <span class="tab-name">MAGALU-MG/CO</span>
+          <span class="tab-sub">Diretoria</span>
+        </div>
+      </div>
+    </button>
+    <button class="tab-btn " onclick="showTab('MAGALU-N-NE',this)">
+      <div class="tab-btn-inner">
+        <div class="tab-icon" style="background:#ff9500">NNE</div>
+        <div class="tab-label">
+          <span class="tab-name">MAGALU-N/NE</span>
+          <span class="tab-sub">Diretoria</span>
+        </div>
+      </div>
+    </button>
+    <button class="tab-btn " onclick="showTab('MAGALU-SP-RJ',this)">
+      <div class="tab-btn-inner">
+        <div class="tab-icon" style="background:#af52de">SP</div>
+        <div class="tab-label">
+          <span class="tab-name">MAGALU-SP/RJ</span>
+          <span class="tab-sub">Diretoria</span>
+        </div>
+      </div>
+    </button>
+    <button class="tab-btn " onclick="showTab('MAGALU-SUL',this)">
+      <div class="tab-btn-inner">
+        <div class="tab-icon" style="background:#ff3b30">SUL</div>
+        <div class="tab-label">
+          <span class="tab-name">MAGALU-SUL</span>
+          <span class="tab-sub">Diretoria</span>
+        </div>
+      </div>
+    </button>
+    <button class="tab-btn " onclick="showTab('MAGALU-VIRTUAL',this)">
+      <div class="tab-btn-inner">
+        <div class="tab-icon" style="background:#5ac8fa">VRT</div>
+        <div class="tab-label">
+          <span class="tab-name">MAGALU-VIRTUAL</span>
+          <span class="tab-sub">Diretoria</span>
+        </div>
+      </div>
+    </button>
+  </div>
+</nav>
+
+<!-- MES BAR -->
+<div class="mes-bar">
+  <span class="mes-bar-lbl">Mês</span>
+  <button class="mes-btn active" onclick="showMes('ABRIL',this)">Abril/26</button>
+  <button class="mes-btn" onclick="showMes('MAIO',this)">Maio/26</button>
+  <button class="mes-btn" onclick="showMes('JUNHO',this)">Junho/26</button>
+</div>
+
+<div class="main">
+<div class="panel active" id="panel-MAGALU-BRASIL">
+  <div class="dash-header" id="hdr-MAGALU-BRASIL">
+    <div class="dash-badge">MAGALU HQ · <span id="badge-mes-MAGALU-BRASIL">Abril/26</span></div>
+    <div class="dash-title">MAGALU BRASIL</div>
+    <div class="dash-sub">Vendas de iPhone · Filtro: MAGALU HQ · SubLOB≠Total</div>
+  </div>
+  <div class="bullets">
+    <div class="bullet b1"><div class="bullet-lbl">📦 Venda Total do Mês</div><div class="bullet-val" id="b-total-MAGALU-BRASIL">—</div><div class="bullet-sub">unidades vendidas</div></div>
+    <div class="bullet b2"><div class="bullet-lbl">🏆 Modelo Mais Vendido</div><div class="bullet-val" id="b-modelo-MAGALU-BRASIL" style="font-size:18px">—</div><div class="bullet-sub" id="b-modelo-val-MAGALU-BRASIL">—</div></div>
+    <div class="bullet b3"><div class="bullet-lbl">🇧🇷 Participação Brasil</div><div class="bullet-val" id="b-pctbr-MAGALU-BRASIL">—</div><div class="bullet-sub">do total Magalu Brasil</div></div>
+    <div class="bullet b4"><div class="bullet-lbl">🚀 Mix NPI (17/Air)</div><div class="bullet-val" id="b-npi-MAGALU-BRASIL">—</div><div class="bullet-sub">iPhone 17 + Pro + Air + 17e</div></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card"><div class="chart-title">📊 Vendas por Território · ordem decrescente</div><div class="chart-wrap"><canvas id="chart-territ-MAGALU-BRASIL"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">📈 Mix de Modelos por Território (%)</div><div class="chart-wrap"><canvas id="chart-mix-MAGALU-BRASIL"></canvas></div></div>
+  </div>
+  <div class="table-card">
+    <div class="table-title">🏪 Top 15 Lojas por Venda</div>
+    <table>
+      <thead><tr><th>#</th><th>Loja</th><th>Venda</th></tr></thead>
+      <tbody id="tbl-MAGALU-BRASIL"></tbody>
+    </table>
+  </div>
+  <div class="footer">Fonte: TESTE BASE MAGALU.xlsx · PARTNER=MAGALU HQ · Gerado via Enchanté · Jun/2026</div>
+</div>
+
+<div class="panel " id="panel-MAGALU-MG-CO">
+  <div class="dash-header" id="hdr-MAGALU-MG-CO">
+    <div class="dash-badge">MAGALU HQ · <span id="badge-mes-MAGALU-MG-CO">Abril/26</span></div>
+    <div class="dash-title">MAGALU-MG/CO</div>
+    <div class="dash-sub">Vendas de iPhone · Filtro: MAGALU HQ · SubLOB≠Total</div>
+  </div>
+  <div class="bullets">
+    <div class="bullet b1"><div class="bullet-lbl">📦 Venda Total do Mês</div><div class="bullet-val" id="b-total-MAGALU-MG-CO">—</div><div class="bullet-sub">unidades vendidas</div></div>
+    <div class="bullet b2"><div class="bullet-lbl">🏆 Modelo Mais Vendido</div><div class="bullet-val" id="b-modelo-MAGALU-MG-CO" style="font-size:18px">—</div><div class="bullet-sub" id="b-modelo-val-MAGALU-MG-CO">—</div></div>
+    <div class="bullet b3"><div class="bullet-lbl">🇧🇷 Participação Brasil</div><div class="bullet-val" id="b-pctbr-MAGALU-MG-CO">—</div><div class="bullet-sub">do total Magalu Brasil</div></div>
+    <div class="bullet b4"><div class="bullet-lbl">🚀 Mix NPI (17/Air)</div><div class="bullet-val" id="b-npi-MAGALU-MG-CO">—</div><div class="bullet-sub">iPhone 17 + Pro + Air + 17e</div></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card"><div class="chart-title">📊 Vendas por Território · ordem decrescente</div><div class="chart-wrap"><canvas id="chart-territ-MAGALU-MG-CO"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">📈 Mix de Modelos por Território (%)</div><div class="chart-wrap"><canvas id="chart-mix-MAGALU-MG-CO"></canvas></div></div>
+  </div>
+  <div class="table-card">
+    <div class="table-title">🏪 Top 15 Lojas por Venda</div>
+    <table>
+      <thead><tr><th>#</th><th>Loja</th><th>Venda</th></tr></thead>
+      <tbody id="tbl-MAGALU-MG-CO"></tbody>
+    </table>
+  </div>
+  <div class="footer">Fonte: TESTE BASE MAGALU.xlsx · PARTNER=MAGALU HQ · Gerado via Enchanté · Jun/2026</div>
+</div>
+
+<div class="panel " id="panel-MAGALU-N-NE">
+  <div class="dash-header" id="hdr-MAGALU-N-NE">
+    <div class="dash-badge">MAGALU HQ · <span id="badge-mes-MAGALU-N-NE">Abril/26</span></div>
+    <div class="dash-title">MAGALU-N/NE</div>
+    <div class="dash-sub">Vendas de iPhone · Filtro: MAGALU HQ · SubLOB≠Total</div>
+  </div>
+  <div class="bullets">
+    <div class="bullet b1"><div class="bullet-lbl">📦 Venda Total do Mês</div><div class="bullet-val" id="b-total-MAGALU-N-NE">—</div><div class="bullet-sub">unidades vendidas</div></div>
+    <div class="bullet b2"><div class="bullet-lbl">🏆 Modelo Mais Vendido</div><div class="bullet-val" id="b-modelo-MAGALU-N-NE" style="font-size:18px">—</div><div class="bullet-sub" id="b-modelo-val-MAGALU-N-NE">—</div></div>
+    <div class="bullet b3"><div class="bullet-lbl">🇧🇷 Participação Brasil</div><div class="bullet-val" id="b-pctbr-MAGALU-N-NE">—</div><div class="bullet-sub">do total Magalu Brasil</div></div>
+    <div class="bullet b4"><div class="bullet-lbl">🚀 Mix NPI (17/Air)</div><div class="bullet-val" id="b-npi-MAGALU-N-NE">—</div><div class="bullet-sub">iPhone 17 + Pro + Air + 17e</div></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card"><div class="chart-title">📊 Vendas por Território · ordem decrescente</div><div class="chart-wrap"><canvas id="chart-territ-MAGALU-N-NE"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">📈 Mix de Modelos por Território (%)</div><div class="chart-wrap"><canvas id="chart-mix-MAGALU-N-NE"></canvas></div></div>
+  </div>
+  <div class="table-card">
+    <div class="table-title">🏪 Top 15 Lojas por Venda</div>
+    <table>
+      <thead><tr><th>#</th><th>Loja</th><th>Venda</th></tr></thead>
+      <tbody id="tbl-MAGALU-N-NE"></tbody>
+    </table>
+  </div>
+  <div class="footer">Fonte: TESTE BASE MAGALU.xlsx · PARTNER=MAGALU HQ · Gerado via Enchanté · Jun/2026</div>
+</div>
+
+<div class="panel " id="panel-MAGALU-SP-RJ">
+  <div class="dash-header" id="hdr-MAGALU-SP-RJ">
+    <div class="dash-badge">MAGALU HQ · <span id="badge-mes-MAGALU-SP-RJ">Abril/26</span></div>
+    <div class="dash-title">MAGALU-SP/RJ</div>
+    <div class="dash-sub">Vendas de iPhone · Filtro: MAGALU HQ · SubLOB≠Total</div>
+  </div>
+  <div class="bullets">
+    <div class="bullet b1"><div class="bullet-lbl">📦 Venda Total do Mês</div><div class="bullet-val" id="b-total-MAGALU-SP-RJ">—</div><div class="bullet-sub">unidades vendidas</div></div>
+    <div class="bullet b2"><div class="bullet-lbl">🏆 Modelo Mais Vendido</div><div class="bullet-val" id="b-modelo-MAGALU-SP-RJ" style="font-size:18px">—</div><div class="bullet-sub" id="b-modelo-val-MAGALU-SP-RJ">—</div></div>
+    <div class="bullet b3"><div class="bullet-lbl">🇧🇷 Participação Brasil</div><div class="bullet-val" id="b-pctbr-MAGALU-SP-RJ">—</div><div class="bullet-sub">do total Magalu Brasil</div></div>
+    <div class="bullet b4"><div class="bullet-lbl">🚀 Mix NPI (17/Air)</div><div class="bullet-val" id="b-npi-MAGALU-SP-RJ">—</div><div class="bullet-sub">iPhone 17 + Pro + Air + 17e</div></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card"><div class="chart-title">📊 Vendas por Território · ordem decrescente</div><div class="chart-wrap"><canvas id="chart-territ-MAGALU-SP-RJ"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">📈 Mix de Modelos por Território (%)</div><div class="chart-wrap"><canvas id="chart-mix-MAGALU-SP-RJ"></canvas></div></div>
+  </div>
+  <div class="table-card">
+    <div class="table-title">🏪 Top 15 Lojas por Venda</div>
+    <table>
+      <thead><tr><th>#</th><th>Loja</th><th>Venda</th></tr></thead>
+      <tbody id="tbl-MAGALU-SP-RJ"></tbody>
+    </table>
+  </div>
+  <div class="footer">Fonte: TESTE BASE MAGALU.xlsx · PARTNER=MAGALU HQ · Gerado via Enchanté · Jun/2026</div>
+</div>
+
+<div class="panel " id="panel-MAGALU-SUL">
+  <div class="dash-header" id="hdr-MAGALU-SUL">
+    <div class="dash-badge">MAGALU HQ · <span id="badge-mes-MAGALU-SUL">Abril/26</span></div>
+    <div class="dash-title">MAGALU-SUL</div>
+    <div class="dash-sub">Vendas de iPhone · Filtro: MAGALU HQ · SubLOB≠Total</div>
+  </div>
+  <div class="bullets">
+    <div class="bullet b1"><div class="bullet-lbl">📦 Venda Total do Mês</div><div class="bullet-val" id="b-total-MAGALU-SUL">—</div><div class="bullet-sub">unidades vendidas</div></div>
+    <div class="bullet b2"><div class="bullet-lbl">🏆 Modelo Mais Vendido</div><div class="bullet-val" id="b-modelo-MAGALU-SUL" style="font-size:18px">—</div><div class="bullet-sub" id="b-modelo-val-MAGALU-SUL">—</div></div>
+    <div class="bullet b3"><div class="bullet-lbl">🇧🇷 Participação Brasil</div><div class="bullet-val" id="b-pctbr-MAGALU-SUL">—</div><div class="bullet-sub">do total Magalu Brasil</div></div>
+    <div class="bullet b4"><div class="bullet-lbl">🚀 Mix NPI (17/Air)</div><div class="bullet-val" id="b-npi-MAGALU-SUL">—</div><div class="bullet-sub">iPhone 17 + Pro + Air + 17e</div></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card"><div class="chart-title">📊 Vendas por Território · ordem decrescente</div><div class="chart-wrap"><canvas id="chart-territ-MAGALU-SUL"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">📈 Mix de Modelos por Território (%)</div><div class="chart-wrap"><canvas id="chart-mix-MAGALU-SUL"></canvas></div></div>
+  </div>
+  <div class="table-card">
+    <div class="table-title">🏪 Top 15 Lojas por Venda</div>
+    <table>
+      <thead><tr><th>#</th><th>Loja</th><th>Venda</th></tr></thead>
+      <tbody id="tbl-MAGALU-SUL"></tbody>
+    </table>
+  </div>
+  <div class="footer">Fonte: TESTE BASE MAGALU.xlsx · PARTNER=MAGALU HQ · Gerado via Enchanté · Jun/2026</div>
+</div>
+
+<div class="panel " id="panel-MAGALU-VIRTUAL">
+  <div class="dash-header" id="hdr-MAGALU-VIRTUAL">
+    <div class="dash-badge">MAGALU HQ · <span id="badge-mes-MAGALU-VIRTUAL">Abril/26</span></div>
+    <div class="dash-title">MAGALU-VIRTUAL</div>
+    <div class="dash-sub">Vendas de iPhone · Filtro: MAGALU HQ · SubLOB≠Total</div>
+  </div>
+  <div class="bullets">
+    <div class="bullet b1"><div class="bullet-lbl">📦 Venda Total do Mês</div><div class="bullet-val" id="b-total-MAGALU-VIRTUAL">—</div><div class="bullet-sub">unidades vendidas</div></div>
+    <div class="bullet b2"><div class="bullet-lbl">🏆 Modelo Mais Vendido</div><div class="bullet-val" id="b-modelo-MAGALU-VIRTUAL" style="font-size:18px">—</div><div class="bullet-sub" id="b-modelo-val-MAGALU-VIRTUAL">—</div></div>
+    <div class="bullet b3"><div class="bullet-lbl">🇧🇷 Participação Brasil</div><div class="bullet-val" id="b-pctbr-MAGALU-VIRTUAL">—</div><div class="bullet-sub">do total Magalu Brasil</div></div>
+    <div class="bullet b4"><div class="bullet-lbl">🚀 Mix NPI (17/Air)</div><div class="bullet-val" id="b-npi-MAGALU-VIRTUAL">—</div><div class="bullet-sub">iPhone 17 + Pro + Air + 17e</div></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card"><div class="chart-title">📊 Vendas por Território · ordem decrescente</div><div class="chart-wrap"><canvas id="chart-territ-MAGALU-VIRTUAL"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">📈 Mix de Modelos por Território (%)</div><div class="chart-wrap"><canvas id="chart-mix-MAGALU-VIRTUAL"></canvas></div></div>
+  </div>
+  <div class="table-card">
+    <div class="table-title">🏪 Top 15 Lojas por Venda</div>
+    <table>
+      <thead><tr><th>#</th><th>Loja</th><th>Venda</th></tr></thead>
+      <tbody id="tbl-MAGALU-VIRTUAL"></tbody>
+    </table>
+  </div>
+  <div class="footer">Fonte: TESTE BASE MAGALU.xlsx · PARTNER=MAGALU HQ · Gerado via Enchanté · Jun/2026</div>
+</div>
+
+<script>
+const DATA = {"MAGALU BRASIL": {"ABRIL": {"total": 22449, "modelo_top": "iPhone 16", "modelo_top_val": 6638, "pct_npi": 18.6, "pct_brasil": 100.0, "territ": {"MAGALU-SP-OESTE SUL": 1952, "MAGALU-SP-ZONA LESTE": 1642, "MAGALU-SP-ABC LITORAL": 1545, "MAGALU-CAMPINAS": 935, "MAGALU-PORTO ALEGRE": 897, "MAGALU-VALE": 871, "MAGALU-RIBEIRÃO PRETO": 758, "MAGALU-FLORIANÓPOLIS": 727, "MAGALU-CAXIAS DO SUL": 708, "MAGALU-CURITIBA": 689, "MAGALU-UBERLÂNDIA": 650, "MAGALU-CHAPECÓ": 644, "MAGALU-CAPITAL RIO": 615, "MAGALU-BAURU": 561, "MAGALU-BELO HORIZONTE": 560, "MAGALU-FORTALEZA": 490, "MAGALU-JUIZ DE FORA": 456, "MAGALU-BELEM DO PARA": 445, "MAGALU-GRANDE RIO": 429, "MAGALU-SALVADOR": 404, "MAGALU-BATATAIS": 395, "MAGALU-RIO PRETO": 391, "MAGALU-BRASILIA": 387, "MAGALU-COSMOPOLIS": 385, "MAGALU-JOÃO PESSOA": 378, "MAGALU-RECIFE": 369, "MAGALU-CUIABA": 349, "MAGALU-NATAL": 342, "MAGALU-OLÍMPIA": 337, "MAGALU-LONDRINA": 327, "MAGALU-CAMPO BOM": 324, "MAGALU-BARRA BONITA": 293, "MAGALU-MACEIÓ": 291, "MAGALU-TERESINA": 289, "MAGALU-IBIPORA": 264, "MAGALU-SÃO LUIS": 254, "MAGALU-CAMPO GRANDE": 253, "MAGALU-SÃO LOURENÇO": 226, "MAGALU-MARABÁ": 202, "MAGALU-ARACAJÚ": 201, "MAGALU-PETROLINA": 187}, "mix": {"MAGALU-SP-OESTE SUL": {"iPhone 16": 29.8, "iPhone 16e": 27.2, "iPhone 15": 19.1, "iPhone 17": 11.8, "iPhone 17 Pro Max": 3.9, "iPhone 17e": 2.7, "iPhone 13": 0.1, "iPhone 14": 0.6}, "MAGALU-SP-ZONA LESTE": {"iPhone 16": 36.1, "iPhone 16e": 23.5, "iPhone 15": 21.5, "iPhone 17": 11.3, "iPhone 17 Pro Max": 2.5, "iPhone 17e": 2.1, "iPhone 13": 0.2, "iPhone 14": 0.2}, "MAGALU-SP-ABC LITORAL": {"iPhone 16": 33.5, "iPhone 16e": 26.4, "iPhone 15": 22.1, "iPhone 17": 11.7, "iPhone 17 Pro Max": 1.8, "iPhone 17e": 2.5, "iPhone 13": 0.3, "iPhone 14": 0.1}, "MAGALU-CAMPINAS": {"iPhone 16": 30.7, "iPhone 16e": 26.6, "iPhone 15": 19.3, "iPhone 17": 13.5, "iPhone 17 Pro Max": 3.5, "iPhone 17e": 2.4, "iPhone 13": 1.1, "iPhone 14": 0.9}, "MAGALU-PORTO ALEGRE": {"iPhone 16": 26.4, "iPhone 16e": 30.9, "iPhone 15": 21.6, "iPhone 17": 12.9, "iPhone 17 Pro Max": 3.3, "iPhone 17e": 1.3, "iPhone 13": 0.4, "iPhone 14": 0.2}, "MAGALU-VALE": {"iPhone 16": 34.8, "iPhone 16e": 24.8, "iPhone 15": 18.5, "iPhone 17": 12.2, "iPhone 17 Pro Max": 3.1, "iPhone 17e": 1.7, "iPhone 13": 0.7, "iPhone 14": 0.9}, "MAGALU-RIBEIRÃO PRETO": {"iPhone 16": 29.6, "iPhone 16e": 20.6, "iPhone 15": 22.8, "iPhone 17": 20.4, "iPhone 17 Pro Max": 2.1, "iPhone 17e": 1.3, "iPhone 13": 0.8, "iPhone 14": 0.4}, "MAGALU-FLORIANÓPOLIS": {"iPhone 16": 24.8, "iPhone 16e": 28.5, "iPhone 15": 20.6, "iPhone 17": 15.8, "iPhone 17 Pro Max": 4.5, "iPhone 17e": 2.1, "iPhone 13": 0.4, "iPhone 14": 1.1}, "MAGALU-CAXIAS DO SUL": {"iPhone 16": 28.2, "iPhone 16e": 31.2, "iPhone 15": 20.5, "iPhone 17": 13.3, "iPhone 17 Pro Max": 2.3, "iPhone 17e": 1.4, "iPhone 13": 0.7, "iPhone 14": 0.7}, "MAGALU-CURITIBA": {"iPhone 16": 29.5, "iPhone 16e": 33.2, "iPhone 15": 17.4, "iPhone 17": 10.6, "iPhone 17 Pro Max": 2.5, "iPhone 17e": 3.0, "iPhone 13": 0.9, "iPhone 14": 1.2}, "MAGALU-UBERLÂNDIA": {"iPhone 16": 26.6, "iPhone 16e": 23.5, "iPhone 15": 22.5, "iPhone 17": 20.9, "iPhone 17 Pro Max": 2.5, "iPhone 17e": 0.6, "iPhone 13": 1.1, "iPhone 14": 0.6}, "MAGALU-CHAPECÓ": {"iPhone 16": 29.0, "iPhone 16e": 25.5, "iPhone 15": 22.8, "iPhone 17": 16.0, "iPhone 17 Pro Max": 2.0, "iPhone 17e": 2.0, "iPhone 13": 1.1, "iPhone 14": 0.8}, "MAGALU-CAPITAL RIO": {"iPhone 16": 29.9, "iPhone 16e": 38.7, "iPhone 15": 14.5, "iPhone 17": 11.2, "iPhone 17 Pro Max": 1.8, "iPhone 17e": 1.8, "iPhone 13": 0.7, "iPhone 14": 0.3}, "MAGALU-BAURU": {"iPhone 16": 31.7, "iPhone 16e": 26.7, "iPhone 15": 22.3, "iPhone 17": 13.9, "iPhone 17 Pro Max": 0.9, "iPhone 17e": 2.1, "iPhone 13": 0.2, "iPhone 14": 0.7}, "MAGALU-BELO HORIZONTE": {"iPhone 16": 21.2, "iPhone 16e": 31.8, "iPhone 15": 25.2, "iPhone 17": 11.2, "iPhone 17 Pro Max": 3.2, "iPhone 17e": 2.3, "iPhone 13": 1.6, "iPhone 14": 0.4}, "MAGALU-FORTALEZA": {"iPhone 16": 32.9, "iPhone 16e": 32.9, "iPhone 15": 14.1, "iPhone 17": 7.8, "iPhone 17 Pro Max": 5.3, "iPhone 17e": 3.1, "iPhone 13": 1.6, "iPhone 14": 0.6}, "MAGALU-JUIZ DE FORA": {"iPhone 16": 20.2, "iPhone 16e": 28.3, "iPhone 15": 28.5, "iPhone 17": 17.1, "iPhone 17 Pro Max": 2.4, "iPhone 17e": 1.1, "iPhone 13": 0.9, "iPhone 14": 0.0}, "MAGALU-BELEM DO PARA": {"iPhone 16": 23.6, "iPhone 16e": 32.4, "iPhone 15": 20.7, "iPhone 17": 10.8, "iPhone 17 Pro Max": 4.5, "iPhone 17e": 1.8, "iPhone 13": 0.9, "iPhone 14": 4.3}, "MAGALU-GRANDE RIO": {"iPhone 16": 34.3, "iPhone 16e": 33.1, "iPhone 15": 18.6, "iPhone 17": 9.8, "iPhone 17 Pro Max": 0.7, "iPhone 17e": 0.7, "iPhone 13": 0.5, "iPhone 14": 1.2}, "MAGALU-SALVADOR": {"iPhone 16": 26.5, "iPhone 16e": 30.7, "iPhone 15": 20.8, "iPhone 17": 10.1, "iPhone 17 Pro Max": 3.7, "iPhone 17e": 2.0, "iPhone 13": 3.2, "iPhone 14": 0.2}}, "top_sublobs": ["iPhone 16", "iPhone 16e", "iPhone 15", "iPhone 17", "iPhone 17 Pro Max", "iPhone 17e", "iPhone 13", "iPhone 14"], "top15": {"MAGALU LS 0537 SP ARICANDUVA": 319, "MAGALU LS 0595 S PAULO V GUILHERME": 223, "MAGALU LS 0579 SP SHOP INTERLAGOS": 201, "MAGALU LS 2073 SP GALERIA PAULISTA": 183, "MAGALU LS 0517 SP INTERN. GUARULHOS": 122, "MAGALU LS 0528 SP SHOP UNIAO OSASCO": 118, "MAGALU LR 0989 FRANCISCO MORATO": 107, "MAGALU LS 0564 SAO PAULO ITAQUERA": 106, "MAGALU LR 0525 SANTO ANDRE": 105, "MAGALU LR 0542 SP SAO MATHEUS": 101, "MAGALU LR 0526 SAO BERNARD DO CAMPO": 100, "MAGALU LS 1553 SHOP CENTER NORTE": 100, "MAGALU LR 0527 SP SAO MIGUEL PTA": 98, "MAGALU LS 0451 CAMPINAS DOM PEDRO": 98, "MAGALU LR 0958 SP LARGO 13 MAIO": 95}}, "MAIO": {"total": 21591, "modelo_top": "iPhone 16", "modelo_top_val": 5237, "pct_npi": 30.3, "pct_brasil": 100.0, "territ": {"MAGALU-SP-OESTE SUL": 1741, "MAGALU-SP-ZONA LESTE": 1412, "MAGALU-SP-ABC LITORAL": 1250, "MAGALU-VALE": 821, "MAGALU-CAMPINAS": 775, "MAGALU-PORTO ALEGRE": 770, "MAGALU-RIBEIRÃO PRETO": 719, "MAGALU-UBERLÂNDIA": 693, "MAGALU-CAXIAS DO SUL": 667, "MAGALU-FLORIANÓPOLIS": 666, "MAGALU-CAPITAL RIO": 644, "MAGALU-BELO HORIZONTE": 617, "MAGALU-CURITIBA": 592, "MAGALU-BAURU": 564, "MAGALU-CHAPECÓ": 545, "MAGALU-FORTALEZA": 545, "MAGALU-BELEM DO PARA": 497, "MAGALU-JUIZ DE FORA": 478, "MAGALU-RECIFE": 473, "MAGALU-JOÃO PESSOA": 449, "MAGALU-NATAL": 427, "MAGALU-SALVADOR": 422, "MAGALU-GRANDE RIO": 418, "MAGALU-BRASILIA": 400, "MAGALU-BATATAIS": 387, "MAGALU-OLÍMPIA": 382, "MAGALU-COSMOPOLIS": 379, "MAGALU-RIO PRETO": 379, "MAGALU-CUIABA": 363, "MAGALU-TERESINA": 333, "MAGALU-LONDRINA": 326, "MAGALU-MACEIÓ": 322, "MAGALU-CAMPO BOM": 298, "MAGALU-CAMPO GRANDE": 267, "MAGALU-BARRA BONITA": 249, "MAGALU-IBIPORA": 240, "MAGALU-SÃO LOURENÇO": 231, "MAGALU-SÃO LUIS": 231, "MAGALU-MARABÁ": 208, "MAGALU-PETROLINA": 195, "MAGALU-ARACAJÚ": 187}, "mix": {"MAGALU-SP-OESTE SUL": {"iPhone 16": 20.9, "iPhone 17": 22.9, "iPhone 16e": 23.0, "iPhone 15": 16.1, "iPhone 17 Pro Max": 6.4, "iPhone 17e": 4.8, "iPhone 13": 0.3, "iPhone 17 Pro": 2.4}, "MAGALU-SP-ZONA LESTE": {"iPhone 16": 27.9, "iPhone 17": 21.6, "iPhone 16e": 23.1, "iPhone 15": 17.5, "iPhone 17 Pro Max": 4.7, "iPhone 17e": 2.7, "iPhone 13": 0.1, "iPhone 17 Pro": 1.7}, "MAGALU-SP-ABC LITORAL": {"iPhone 16": 25.8, "iPhone 17": 23.0, "iPhone 16e": 23.8, "iPhone 15": 18.2, "iPhone 17 Pro Max": 3.0, "iPhone 17e": 3.9, "iPhone 13": 0.2, "iPhone 17 Pro": 0.8}, "MAGALU-VALE": {"iPhone 16": 24.5, "iPhone 17": 24.2, "iPhone 16e": 21.2, "iPhone 15": 18.5, "iPhone 17 Pro Max": 3.8, "iPhone 17e": 1.8, "iPhone 13": 1.3, "iPhone 17 Pro": 1.2}, "MAGALU-CAMPINAS": {"iPhone 16": 21.9, "iPhone 17": 22.3, "iPhone 16e": 27.0, "iPhone 15": 19.2, "iPhone 17 Pro Max": 2.8, "iPhone 17e": 2.7, "iPhone 13": 0.5, "iPhone 17 Pro": 1.3}, "MAGALU-PORTO ALEGRE": {"iPhone 16": 23.1, "iPhone 17": 24.8, "iPhone 16e": 26.1, "iPhone 15": 19.6, "iPhone 17 Pro Max": 2.1, "iPhone 17e": 1.7, "iPhone 13": 0.9, "iPhone 17 Pro": 0.8}, "MAGALU-RIBEIRÃO PRETO": {"iPhone 16": 22.3, "iPhone 17": 31.6, "iPhone 16e": 22.0, "iPhone 15": 16.7, "iPhone 17 Pro Max": 2.9, "iPhone 17e": 1.3, "iPhone 13": 1.4, "iPhone 17 Pro": 1.0}, "MAGALU-UBERLÂNDIA": {"iPhone 16": 17.2, "iPhone 17": 32.2, "iPhone 16e": 20.3, "iPhone 15": 24.8, "iPhone 17 Pro Max": 1.9, "iPhone 17e": 0.7, "iPhone 13": 0.9, "iPhone 17 Pro": 0.6}, "MAGALU-CAXIAS DO SUL": {"iPhone 16": 25.2, "iPhone 17": 27.3, "iPhone 16e": 24.1, "iPhone 15": 17.8, "iPhone 17 Pro Max": 2.4, "iPhone 17e": 0.9, "iPhone 13": 0.4, "iPhone 17 Pro": 0.7}, "MAGALU-FLORIANÓPOLIS": {"iPhone 16": 22.7, "iPhone 17": 25.5, "iPhone 16e": 24.2, "iPhone 15": 16.8, "iPhone 17 Pro Max": 3.6, "iPhone 17e": 4.4, "iPhone 13": 1.2, "iPhone 17 Pro": 1.1}, "MAGALU-CAPITAL RIO": {"iPhone 16": 28.7, "iPhone 17": 24.4, "iPhone 16e": 22.8, "iPhone 15": 17.4, "iPhone 17 Pro Max": 3.0, "iPhone 17e": 1.4, "iPhone 13": 0.8, "iPhone 17 Pro": 1.2}, "MAGALU-BELO HORIZONTE": {"iPhone 16": 27.6, "iPhone 17": 22.4, "iPhone 16e": 18.3, "iPhone 15": 19.8, "iPhone 17 Pro Max": 4.2, "iPhone 17e": 1.5, "iPhone 13": 2.6, "iPhone 17 Pro": 1.8}, "MAGALU-CURITIBA": {"iPhone 16": 23.5, "iPhone 17": 21.6, "iPhone 16e": 24.3, "iPhone 15": 20.1, "iPhone 17 Pro Max": 2.9, "iPhone 17e": 4.9, "iPhone 13": 1.2, "iPhone 17 Pro": 0.8}, "MAGALU-BAURU": {"iPhone 16": 23.9, "iPhone 17": 23.6, "iPhone 16e": 27.3, "iPhone 15": 18.8, "iPhone 17 Pro Max": 2.7, "iPhone 17e": 1.6, "iPhone 13": 0.7, "iPhone 17 Pro": 0.5}, "MAGALU-CHAPECÓ": {"iPhone 16": 23.3, "iPhone 17": 31.4, "iPhone 16e": 21.8, "iPhone 15": 18.0, "iPhone 17 Pro Max": 1.5, "iPhone 17e": 1.1, "iPhone 13": 0.7, "iPhone 17 Pro": 1.5}, "MAGALU-FORTALEZA": {"iPhone 16": 30.3, "iPhone 17": 14.1, "iPhone 16e": 31.7, "iPhone 15": 13.8, "iPhone 17 Pro Max": 3.3, "iPhone 17e": 0.9, "iPhone 13": 3.3, "iPhone 17 Pro": 1.1}, "MAGALU-BELEM DO PARA": {"iPhone 16": 22.3, "iPhone 17": 19.7, "iPhone 16e": 24.9, "iPhone 15": 23.1, "iPhone 17 Pro Max": 2.4, "iPhone 17e": 2.0, "iPhone 13": 0.4, "iPhone 17 Pro": 1.4}, "MAGALU-JUIZ DE FORA": {"iPhone 16": 26.4, "iPhone 17": 27.4, "iPhone 16e": 15.7, "iPhone 15": 23.6, "iPhone 17 Pro Max": 1.7, "iPhone 17e": 0.8, "iPhone 13": 1.9, "iPhone 17 Pro": 0.6}, "MAGALU-RECIFE": {"iPhone 16": 31.9, "iPhone 17": 8.9, "iPhone 16e": 28.3, "iPhone 15": 18.2, "iPhone 17 Pro Max": 1.5, "iPhone 17e": 4.7, "iPhone 13": 3.2, "iPhone 17 Pro": 1.7}, "MAGALU-JOÃO PESSOA": {"iPhone 16": 37.0, "iPhone 17": 18.7, "iPhone 16e": 13.6, "iPhone 15": 15.8, "iPhone 17 Pro Max": 3.6, "iPhone 17e": 2.9, "iPhone 13": 5.1, "iPhone 17 Pro": 1.1}}, "top_sublobs": ["iPhone 16", "iPhone 17", "iPhone 16e", "iPhone 15", "iPhone 17 Pro Max", "iPhone 17e", "iPhone 13", "iPhone 17 Pro"], "top15": {"MAGALU LS 0537 SP ARICANDUVA": 250, "MAGALU LS 0595 S PAULO V GUILHERME": 207, "MAGALU LS 0579 SP SHOP INTERLAGOS": 187, "MAGALU LS 2073 SP GALERIA PAULISTA": 169, "MAGALU LR 0989 FRANCISCO MORATO": 167, "MAGALU LS 0851 PE SHOP RECIFE": 164, "MAGALU LS 0517 SP INTERN. GUARULHOS": 131, "MAGALU LS 0564 SAO PAULO ITAQUERA": 121, "MAGALU LS 0528 SP SHOP UNIAO OSASCO": 90, "MAGALU LR 0542 SP SAO MATHEUS": 89, "MAGALU LS 1553 SHOP CENTER NORTE": 87, "MAGALU LS 0727 FORTALEZA RIOMAR": 85, "MAGALU LR 0707 NATAL LAGOA SECA": 79, "MAGALU LS 1562 TIETE PLAZA": 77, "MAGALU LR 0543 SP ITAIM PAULISTA": 77}}, "JUNHO": {"total": 0, "modelo_top": "N/A", "modelo_top_val": 0, "pct_npi": 0, "pct_brasil": 0, "territ": {}, "mix": {}, "top_sublobs": ["AirPods (2nd Gen) Wired", "iPhone 17 Pro", "iPhone 14", "iPhone 14 Plus", "iPhone 14 Pro", "iPhone 14 Pro Max", "iPhone 15", "iPhone 15 Plus"], "top15": {}}}, "MAGALU-MG/CO": {"ABRIL": {"total": 2655, "modelo_top": "iPhone 16e", "modelo_top_val": 796, "pct_npi": 18.5, "pct_brasil": 11.8, "territ": {"MAGALU-UBERLÂNDIA": 650, "MAGALU-BELO HORIZONTE": 560, "MAGALU-JUIZ DE FORA": 456, "MAGALU-BRASILIA": 387, "MAGALU-CUIABA": 349, "MAGALU-CAMPO GRANDE": 253}, "mix": {"MAGALU-UBERLÂNDIA": {"iPhone 16e": 23.5, "iPhone 16": 26.6, "iPhone 15": 22.5, "iPhone 17": 20.9, "iPhone 17 Pro Max": 2.5, "iPhone 17e": 0.6, "iPhone 13": 1.1, "iPhone 17 Pro": 0.6}, "MAGALU-BELO HORIZONTE": {"iPhone 16e": 31.8, "iPhone 16": 21.2, "iPhone 15": 25.2, "iPhone 17": 11.2, "iPhone 17 Pro Max": 3.2, "iPhone 17e": 2.3, "iPhone 13": 1.6, "iPhone 17 Pro": 0.9}, "MAGALU-JUIZ DE FORA": {"iPhone 16e": 28.3, "iPhone 16": 20.2, "iPhone 15": 28.5, "iPhone 17": 17.1, "iPhone 17 Pro Max": 2.4, "iPhone 17e": 1.1, "iPhone 13": 0.9, "iPhone 17 Pro": 0.4}, "MAGALU-BRASILIA": {"iPhone 16e": 37.2, "iPhone 16": 22.0, "iPhone 15": 21.2, "iPhone 17": 8.5, "iPhone 17 Pro Max": 3.6, "iPhone 17e": 2.8, "iPhone 13": 1.8, "iPhone 17 Pro": 0.5}, "MAGALU-CUIABA": {"iPhone 16e": 30.1, "iPhone 16": 30.1, "iPhone 15": 22.6, "iPhone 17": 9.5, "iPhone 17 Pro Max": 1.7, "iPhone 17e": 1.1, "iPhone 13": 1.7, "iPhone 17 Pro": 1.1}, "MAGALU-CAMPO GRANDE": {"iPhone 16e": 34.4, "iPhone 16": 29.2, "iPhone 15": 22.5, "iPhone 17": 9.5, "iPhone 17 Pro Max": 0.4, "iPhone 17e": 0.8, "iPhone 13": 1.6, "iPhone 17 Pro": 0.8}}, "top_sublobs": ["iPhone 16e", "iPhone 16", "iPhone 15", "iPhone 17", "iPhone 17 Pro Max", "iPhone 17e", "iPhone 13", "iPhone 17 Pro"], "top15": {"MAGALU LS 0110 UBERABA SHOPPING": 84, "MAGALU LS 1531 BRASILIA CJ NACIONAL": 70, "MAGALU LS 0586 MS CPO GDE NORTESUL": 48, "MAGALU LS 0484 BELO HORIZONTE SHOP": 47, "MAGALU LR 0014 UBERLANDIA AF PENA": 46, "MAGALU LR 0005 UBERABA RUI BARBOSA": 45, "MAGALU LR 0155 PATOS DE MINAS": 44, "MAGALU LS 0021 UBERLANDIA ST MONICA": 39, "MAGALU LR 0002 ARAXA": 38, "MAGALU LR 0219 JUIZ DE FORA": 35, "MAGALU LR 0216 CONSELHEIRO LAFAIETE": 34, "MAGALU LR 1129 RONDONOPOLIS": 34, "MAGALU LS 0656 DAVID SARNOFFL MG": 32, "MAGALU LR 1029 GOIANIA AV ANHANG I": 32, "MAGALU LR 0237 BETIM": 32}}, "MAIO": {"total": 2818, "modelo_top": "iPhone 17", "modelo_top_val": 749, "pct_npi": 31.1, "pct_brasil": 13.1, "territ": {"MAGALU-UBERLÂNDIA": 693, "MAGALU-BELO HORIZONTE": 617, "MAGALU-JUIZ DE FORA": 478, "MAGALU-BRASILIA": 400, "MAGALU-CUIABA": 363, "MAGALU-CAMPO GRANDE": 267}, "mix": {"MAGALU-UBERLÂNDIA": {"iPhone 17": 32.2, "iPhone 16": 17.2, "iPhone 15": 24.8, "iPhone 16e": 20.3, "iPhone 17 Pro Max": 1.9, "iPhone 13": 0.9, "iPhone 17e": 0.7, "iPhone 17 Pro": 0.6}, "MAGALU-BELO HORIZONTE": {"iPhone 17": 22.4, "iPhone 16": 27.6, "iPhone 15": 19.8, "iPhone 16e": 18.3, "iPhone 17 Pro Max": 4.2, "iPhone 13": 2.6, "iPhone 17e": 1.5, "iPhone 17 Pro": 1.8}, "MAGALU-JUIZ DE FORA": {"iPhone 17": 27.4, "iPhone 16": 26.4, "iPhone 15": 23.6, "iPhone 16e": 15.7, "iPhone 17 Pro Max": 1.7, "iPhone 13": 1.9, "iPhone 17e": 0.8, "iPhone 17 Pro": 0.6}, "MAGALU-BRASILIA": {"iPhone 17": 20.8, "iPhone 16": 26.5, "iPhone 15": 20.0, "iPhone 16e": 22.0, "iPhone 17 Pro Max": 3.8, "iPhone 13": 2.0, "iPhone 17e": 1.5, "iPhone 17 Pro": 1.5}, "MAGALU-CUIABA": {"iPhone 17": 24.5, "iPhone 16": 19.6, "iPhone 15": 20.4, "iPhone 16e": 25.9, "iPhone 17 Pro Max": 0.3, "iPhone 13": 3.9, "iPhone 17e": 1.1, "iPhone 17 Pro": 0.3}, "MAGALU-CAMPO GRANDE": {"iPhone 17": 31.8, "iPhone 16": 24.0, "iPhone 15": 15.4, "iPhone 16e": 20.2, "iPhone 17 Pro Max": 1.5, "iPhone 13": 1.9, "iPhone 17e": 1.9, "iPhone 17 Pro": 0.7}}, "top_sublobs": ["iPhone 17", "iPhone 16", "iPhone 15", "iPhone 16e", "iPhone 17 Pro Max", "iPhone 13", "iPhone 17e", "iPhone 17 Pro"], "top15": {"MAGALU LS 1531 BRASILIA CJ NACIONAL": 65, "MAGALU LS 0110 UBERABA SHOPPING": 62, "MAGALU LR 0014 UBERLANDIA AF PENA": 57, "MAGALU LR 1029 GOIANIA AV ANHANG I": 52, "MAGALU LR 0005 UBERABA RUI BARBOSA": 49, "MAGALU LS 0021 UBERLANDIA ST MONICA": 48, "MAGALU LR 0155 PATOS DE MINAS": 47, "MAGALU LS 0484 BELO HORIZONTE SHOP": 46, "MAGALU LR 0219 JUIZ DE FORA": 44, "MAGALU LS 0656 DAVID SARNOFFL MG": 41, "MAGALU LS 0586 MS CPO GDE NORTESUL": 40, "MAGALU LR 0002 ARAXA": 39, "MAGALU LR 1129 RONDONOPOLIS": 37, "MAGALU LR 0015 ITUIUTABA": 36, "MAGALU LS 0976 BETIM METROP GARDEN": 34}}, "JUNHO": {"total": 0, "modelo_top": "N/A", "modelo_top_val": 0, "pct_npi": 0, "pct_brasil": 0, "territ": {}, "mix": {}, "top_sublobs": ["AirPods (2nd Gen) Wired", "iPhone 13 mini", "iPhone 14 Plus", "iPhone 14 Pro", "iPhone 14 Pro Max", "iPhone 15", "iPhone 15 Plus", "iPhone 15 Pro"], "top15": {}}}, "MAGALU-N/NE": {"ABRIL": {"total": 3852, "modelo_top": "iPhone 16e", "modelo_top_val": 1180, "pct_npi": 16.5, "pct_brasil": 17.2, "territ": {"MAGALU-FORTALEZA": 490, "MAGALU-BELEM DO PARA": 445, "MAGALU-SALVADOR": 404, "MAGALU-JOÃO PESSOA": 378, "MAGALU-RECIFE": 369, "MAGALU-NATAL": 342, "MAGALU-MACEIÓ": 291, "MAGALU-TERESINA": 289, "MAGALU-SÃO LUIS": 254, "MAGALU-MARABÁ": 202, "MAGALU-ARACAJÚ": 201, "MAGALU-PETROLINA": 187}, "mix": {"MAGALU-FORTALEZA": {"iPhone 16e": 32.9, "iPhone 16": 32.9, "iPhone 15": 14.1, "iPhone 17": 7.8, "iPhone 17 Pro Max": 5.3, "iPhone 13": 1.6, "iPhone 14": 0.6, "iPhone 17e": 3.1}, "MAGALU-BELEM DO PARA": {"iPhone 16e": 32.4, "iPhone 16": 23.6, "iPhone 15": 20.7, "iPhone 17": 10.8, "iPhone 17 Pro Max": 4.5, "iPhone 13": 0.9, "iPhone 14": 4.3, "iPhone 17e": 1.8}, "MAGALU-SALVADOR": {"iPhone 16e": 30.7, "iPhone 16": 26.5, "iPhone 15": 20.8, "iPhone 17": 10.1, "iPhone 17 Pro Max": 3.7, "iPhone 13": 3.2, "iPhone 14": 0.2, "iPhone 17e": 2.0}, "MAGALU-JOÃO PESSOA": {"iPhone 16e": 24.3, "iPhone 16": 27.5, "iPhone 15": 20.4, "iPhone 17": 15.6, "iPhone 17 Pro Max": 3.4, "iPhone 13": 1.9, "iPhone 14": 1.3, "iPhone 17e": 2.4}, "MAGALU-RECIFE": {"iPhone 16e": 34.4, "iPhone 16": 23.3, "iPhone 15": 19.0, "iPhone 17": 8.4, "iPhone 17 Pro Max": 6.0, "iPhone 13": 3.8, "iPhone 14": 1.1, "iPhone 17e": 2.2}, "MAGALU-NATAL": {"iPhone 16e": 31.0, "iPhone 16": 31.0, "iPhone 15": 19.0, "iPhone 17": 9.9, "iPhone 17 Pro Max": 4.4, "iPhone 13": 1.2, "iPhone 14": 0.6, "iPhone 17e": 1.5}, "MAGALU-MACEIÓ": {"iPhone 16e": 20.6, "iPhone 16": 30.9, "iPhone 15": 25.1, "iPhone 17": 9.6, "iPhone 17 Pro Max": 4.8, "iPhone 13": 1.7, "iPhone 14": 3.8, "iPhone 17e": 1.4}, "MAGALU-TERESINA": {"iPhone 16e": 31.5, "iPhone 16": 28.7, "iPhone 15": 24.6, "iPhone 17": 8.7, "iPhone 17 Pro Max": 3.1, "iPhone 13": 0.3, "iPhone 14": 1.7, "iPhone 17e": 0.0}, "MAGALU-SÃO LUIS": {"iPhone 16e": 38.2, "iPhone 16": 24.4, "iPhone 15": 21.3, "iPhone 17": 10.6, "iPhone 17 Pro Max": 2.8, "iPhone 13": 0.0, "iPhone 14": 2.0, "iPhone 17e": 0.0}, "MAGALU-MARABÁ": {"iPhone 16e": 30.2, "iPhone 16": 27.2, "iPhone 15": 24.8, "iPhone 17": 8.9, "iPhone 17 Pro Max": 3.0, "iPhone 13": 0.0, "iPhone 14": 0.5, "iPhone 17e": 1.0}, "MAGALU-ARACAJÚ": {"iPhone 16e": 29.4, "iPhone 16": 20.4, "iPhone 15": 21.4, "iPhone 17": 11.9, "iPhone 17 Pro Max": 2.0, "iPhone 13": 9.5, "iPhone 14": 2.5, "iPhone 17e": 0.5}, "MAGALU-PETROLINA": {"iPhone 16e": 31.0, "iPhone 16": 20.9, "iPhone 15": 30.5, "iPhone 17": 7.0, "iPhone 17 Pro Max": 2.1, "iPhone 13": 3.2, "iPhone 14": 2.1, "iPhone 17e": 1.1}}, "top_sublobs": ["iPhone 16e", "iPhone 16", "iPhone 15", "iPhone 17", "iPhone 17 Pro Max", "iPhone 13", "iPhone 14", "iPhone 17e"], "top15": {"MAGALU LS 0757 FORTALEZA IGUATEMI": 87, "MAGALU LS 0725 SALVADOR": 82, "MAGALU LS 1204 RN NATAL MIDWAY": 75, "MAGALU LS 0735 PB JP MANGABEIRA": 66, "MAGALU LS 1235 SAO LUIS SHOP ILHA": 65, "MAGALU LS 0851 PE SHOP RECIFE": 57, "MAGALU LS 0713 PE RIOMAR RECIFE": 57, "MAGALU LS 0727 FORTALEZA RIOMAR": 52, "MAGALU LS 0835 FORTALEZA NORTH SHOP": 48, "MAGALU LR 0784 RECIFE IMBIRIBEIRA": 47, "MAGALU LS 0845 MACEIO SHOP MACEIO": 44, "MAGALU LR 0844 MOSSORO IDA OLIVEIRA": 42, "MAGALU LS 0738 JOAO PESSOA MANAIRA": 42, "MAGALU LS 1340 BELEM CASTA": 37, "MAGALU LS 0747 SALVADOR SH IGUATEMI": 34}}, "MAIO": {"total": 4289, "modelo_top": "iPhone 16", "modelo_top_val": 1148, "pct_npi": 23.2, "pct_brasil": 19.9, "territ": {"MAGALU-FORTALEZA": 545, "MAGALU-BELEM DO PARA": 497, "MAGALU-RECIFE": 473, "MAGALU-JOÃO PESSOA": 449, "MAGALU-NATAL": 427, "MAGALU-SALVADOR": 422, "MAGALU-TERESINA": 333, "MAGALU-MACEIÓ": 322, "MAGALU-SÃO LUIS": 231, "MAGALU-MARABÁ": 208, "MAGALU-PETROLINA": 195, "MAGALU-ARACAJÚ": 187}, "mix": {"MAGALU-FORTALEZA": {"iPhone 16": 30.3, "iPhone 16e": 31.7, "iPhone 15": 13.8, "iPhone 17": 14.1, "iPhone 13": 3.3, "iPhone 17 Pro Max": 3.3, "iPhone 17e": 0.9, "iPhone 14": 0.6}, "MAGALU-BELEM DO PARA": {"iPhone 16": 22.3, "iPhone 16e": 24.9, "iPhone 15": 23.1, "iPhone 17": 19.7, "iPhone 13": 0.4, "iPhone 17 Pro Max": 2.4, "iPhone 17e": 2.0, "iPhone 14": 1.8}, "MAGALU-RECIFE": {"iPhone 16": 31.9, "iPhone 16e": 28.3, "iPhone 15": 18.2, "iPhone 17": 8.9, "iPhone 13": 3.2, "iPhone 17 Pro Max": 1.5, "iPhone 17e": 4.7, "iPhone 14": 1.1}, "MAGALU-JOÃO PESSOA": {"iPhone 16": 37.0, "iPhone 16e": 13.6, "iPhone 15": 15.8, "iPhone 17": 18.7, "iPhone 13": 5.1, "iPhone 17 Pro Max": 3.6, "iPhone 17e": 2.9, "iPhone 14": 0.4}, "MAGALU-NATAL": {"iPhone 16": 33.7, "iPhone 16e": 18.5, "iPhone 15": 18.0, "iPhone 17": 17.6, "iPhone 13": 6.8, "iPhone 17 Pro Max": 1.9, "iPhone 17e": 2.1, "iPhone 14": 0.5}, "MAGALU-SALVADOR": {"iPhone 16": 23.5, "iPhone 16e": 21.6, "iPhone 15": 20.9, "iPhone 17": 21.8, "iPhone 13": 3.1, "iPhone 17 Pro Max": 5.0, "iPhone 17e": 2.1, "iPhone 14": 0.7}, "MAGALU-TERESINA": {"iPhone 16": 21.3, "iPhone 16e": 30.0, "iPhone 15": 24.3, "iPhone 17": 18.9, "iPhone 13": 0.6, "iPhone 17 Pro Max": 0.9, "iPhone 17e": 0.3, "iPhone 14": 1.2}, "MAGALU-MACEIÓ": {"iPhone 16": 22.4, "iPhone 16e": 21.7, "iPhone 15": 24.8, "iPhone 17": 13.0, "iPhone 13": 3.7, "iPhone 17 Pro Max": 4.3, "iPhone 17e": 3.1, "iPhone 14": 1.2}, "MAGALU-SÃO LUIS": {"iPhone 16": 21.6, "iPhone 16e": 26.4, "iPhone 15": 22.9, "iPhone 17": 19.5, "iPhone 13": 1.7, "iPhone 17 Pro Max": 3.0, "iPhone 17e": 0.4, "iPhone 14": 1.3}, "MAGALU-MARABÁ": {"iPhone 16": 16.8, "iPhone 16e": 25.0, "iPhone 15": 23.6, "iPhone 17": 26.4, "iPhone 13": 0.5, "iPhone 17 Pro Max": 1.9, "iPhone 17e": 0.0, "iPhone 14": 1.9}, "MAGALU-PETROLINA": {"iPhone 16": 21.5, "iPhone 16e": 22.6, "iPhone 15": 28.2, "iPhone 17": 19.5, "iPhone 13": 3.6, "iPhone 17 Pro Max": 1.0, "iPhone 17e": 0.5, "iPhone 14": 1.5}, "MAGALU-ARACAJÚ": {"iPhone 16": 22.5, "iPhone 16e": 24.1, "iPhone 15": 17.1, "iPhone 17": 21.4, "iPhone 13": 11.2, "iPhone 17 Pro Max": 0.0, "iPhone 17e": 0.0, "iPhone 14": 2.1}}, "top_sublobs": ["iPhone 16", "iPhone 16e", "iPhone 15", "iPhone 17", "iPhone 13", "iPhone 17 Pro Max", "iPhone 17e", "iPhone 14"], "top15": {"MAGALU LS 0851 PE SHOP RECIFE": 164, "MAGALU LS 0727 FORTALEZA RIOMAR": 85, "MAGALU LR 0707 NATAL LAGOA SECA": 79, "MAGALU LS 0735 PB JP MANGABEIRA": 71, "MAGALU LS 0757 FORTALEZA IGUATEMI": 69, "MAGALU LS 0725 SALVADOR": 65, "MAGALU LS 1204 RN NATAL MIDWAY": 63, "MAGALU LS 0713 PE RIOMAR RECIFE": 63, "MAGALU LS 0845 MACEIO SHOP MACEIO": 61, "MAGALU LR 0861 TERESINA CENTRO": 58, "MAGALU LS 1362 SHOP PATIO MACEIO": 55, "MAGALU LR 0844 MOSSORO IDA OLIVEIRA": 52, "MAGALU LS 1235 SAO LUIS SHOP ILHA": 50, "MAGALU LR 0717 CAMPINA GDE PRES": 49, "MAGALU LR 0745 FORTALEZA MONTESE": 49}}, "JUNHO": {"total": 0, "modelo_top": "N/A", "modelo_top_val": 0, "pct_npi": 0, "pct_brasil": 0, "territ": {}, "mix": {}, "top_sublobs": ["AirPods (2nd Gen) Wired", "iPhone 17 Pro Max", "iPhone 14 Pro Max", "iPhone 15", "iPhone 15 Plus", "iPhone 15 Pro", "iPhone 15 Pro Max", "iPhone 16"], "top15": {}}}, "MAGALU-SP/RJ": {"ABRIL": {"total": 9699, "modelo_top": "iPhone 16", "modelo_top_val": 3134, "pct_npi": 18.7, "pct_brasil": 43.2, "territ": {"MAGALU-SP-OESTE SUL": 1952, "MAGALU-SP-ZONA LESTE": 1642, "MAGALU-SP-ABC LITORAL": 1545, "MAGALU-CAMPINAS": 935, "MAGALU-VALE": 871, "MAGALU-RIBEIRÃO PRETO": 758, "MAGALU-CAPITAL RIO": 615, "MAGALU-BAURU": 561, "MAGALU-GRANDE RIO": 429, "MAGALU-RIO PRETO": 391}, "mix": {"MAGALU-SP-OESTE SUL": {"iPhone 16": 29.8, "iPhone 16e": 27.2, "iPhone 15": 19.1, "iPhone 17": 11.8, "iPhone 17 Pro Max": 3.9, "iPhone 17e": 2.7, "iPhone 17 Pro": 1.6, "iPhone 14": 0.6}, "MAGALU-SP-ZONA LESTE": {"iPhone 16": 36.1, "iPhone 16e": 23.5, "iPhone 15": 21.5, "iPhone 17": 11.3, "iPhone 17 Pro Max": 2.5, "iPhone 17e": 2.1, "iPhone 17 Pro": 2.1, "iPhone 14": 0.2}, "MAGALU-SP-ABC LITORAL": {"iPhone 16": 33.5, "iPhone 16e": 26.4, "iPhone 15": 22.1, "iPhone 17": 11.7, "iPhone 17 Pro Max": 1.8, "iPhone 17e": 2.5, "iPhone 17 Pro": 0.6, "iPhone 14": 0.1}, "MAGALU-CAMPINAS": {"iPhone 16": 30.7, "iPhone 16e": 26.6, "iPhone 15": 19.3, "iPhone 17": 13.5, "iPhone 17 Pro Max": 3.5, "iPhone 17e": 2.4, "iPhone 17 Pro": 0.7, "iPhone 14": 0.9}, "MAGALU-VALE": {"iPhone 16": 34.8, "iPhone 16e": 24.8, "iPhone 15": 18.5, "iPhone 17": 12.2, "iPhone 17 Pro Max": 3.1, "iPhone 17e": 1.7, "iPhone 17 Pro": 1.3, "iPhone 14": 0.9}, "MAGALU-RIBEIRÃO PRETO": {"iPhone 16": 29.6, "iPhone 16e": 20.6, "iPhone 15": 22.8, "iPhone 17": 20.4, "iPhone 17 Pro Max": 2.1, "iPhone 17e": 1.3, "iPhone 17 Pro": 0.4, "iPhone 14": 0.4}, "MAGALU-CAPITAL RIO": {"iPhone 16": 29.9, "iPhone 16e": 38.7, "iPhone 15": 14.5, "iPhone 17": 11.2, "iPhone 17 Pro Max": 1.8, "iPhone 17e": 1.8, "iPhone 17 Pro": 0.5, "iPhone 14": 0.3}, "MAGALU-BAURU": {"iPhone 16": 31.7, "iPhone 16e": 26.7, "iPhone 15": 22.3, "iPhone 17": 13.9, "iPhone 17 Pro Max": 0.9, "iPhone 17e": 2.1, "iPhone 17 Pro": 0.4, "iPhone 14": 0.7}, "MAGALU-GRANDE RIO": {"iPhone 16": 34.3, "iPhone 16e": 33.1, "iPhone 15": 18.6, "iPhone 17": 9.8, "iPhone 17 Pro Max": 0.7, "iPhone 17e": 0.7, "iPhone 17 Pro": 0.5, "iPhone 14": 1.2}, "MAGALU-RIO PRETO": {"iPhone 16": 30.4, "iPhone 16e": 20.7, "iPhone 15": 21.0, "iPhone 17": 17.9, "iPhone 17 Pro Max": 4.1, "iPhone 17e": 1.0, "iPhone 17 Pro": 0.3, "iPhone 14": 2.0}}, "top_sublobs": ["iPhone 16", "iPhone 16e", "iPhone 15", "iPhone 17", "iPhone 17 Pro Max", "iPhone 17e", "iPhone 17 Pro", "iPhone 14"], "top15": {"MAGALU LS 0537 SP ARICANDUVA": 319, "MAGALU LS 0595 S PAULO V GUILHERME": 223, "MAGALU LS 0579 SP SHOP INTERLAGOS": 201, "MAGALU LS 2073 SP GALERIA PAULISTA": 183, "MAGALU LS 0517 SP INTERN. GUARULHOS": 122, "MAGALU LS 0528 SP SHOP UNIAO OSASCO": 118, "MAGALU LR 0989 FRANCISCO MORATO": 107, "MAGALU LS 0564 SAO PAULO ITAQUERA": 106, "MAGALU LR 0525 SANTO ANDRE": 105, "MAGALU LR 0542 SP SAO MATHEUS": 101, "MAGALU LR 0526 SAO BERNARD DO CAMPO": 100, "MAGALU LS 1553 SHOP CENTER NORTE": 100, "MAGALU LR 0527 SP SAO MIGUEL PTA": 98, "MAGALU LS 0451 CAMPINAS DOM PEDRO": 98, "MAGALU LR 0958 SP LARGO 13 MAIO": 95}}, "MAIO": {"total": 8723, "modelo_top": "iPhone 16", "modelo_top_val": 2132, "pct_npi": 32.2, "pct_brasil": 40.4, "territ": {"MAGALU-SP-OESTE SUL": 1741, "MAGALU-SP-ZONA LESTE": 1412, "MAGALU-SP-ABC LITORAL": 1250, "MAGALU-VALE": 821, "MAGALU-CAMPINAS": 775, "MAGALU-RIBEIRÃO PRETO": 719, "MAGALU-CAPITAL RIO": 644, "MAGALU-BAURU": 564, "MAGALU-GRANDE RIO": 418, "MAGALU-RIO PRETO": 379}, "mix": {"MAGALU-SP-OESTE SUL": {"iPhone 16": 20.9, "iPhone 17": 22.9, "iPhone 16e": 23.0, "iPhone 15": 16.1, "iPhone 17 Pro Max": 6.4, "iPhone 17e": 4.8, "iPhone 17 Pro": 2.4, "iPhone 13": 0.3}, "MAGALU-SP-ZONA LESTE": {"iPhone 16": 27.9, "iPhone 17": 21.6, "iPhone 16e": 23.1, "iPhone 15": 17.5, "iPhone 17 Pro Max": 4.7, "iPhone 17e": 2.7, "iPhone 17 Pro": 1.7, "iPhone 13": 0.1}, "MAGALU-SP-ABC LITORAL": {"iPhone 16": 25.8, "iPhone 17": 23.0, "iPhone 16e": 23.8, "iPhone 15": 18.2, "iPhone 17 Pro Max": 3.0, "iPhone 17e": 3.9, "iPhone 17 Pro": 0.8, "iPhone 13": 0.2}, "MAGALU-VALE": {"iPhone 16": 24.5, "iPhone 17": 24.2, "iPhone 16e": 21.2, "iPhone 15": 18.5, "iPhone 17 Pro Max": 3.8, "iPhone 17e": 1.8, "iPhone 17 Pro": 1.2, "iPhone 13": 1.3}, "MAGALU-CAMPINAS": {"iPhone 16": 21.9, "iPhone 17": 22.3, "iPhone 16e": 27.0, "iPhone 15": 19.2, "iPhone 17 Pro Max": 2.8, "iPhone 17e": 2.7, "iPhone 17 Pro": 1.3, "iPhone 13": 0.5}, "MAGALU-RIBEIRÃO PRETO": {"iPhone 16": 22.3, "iPhone 17": 31.6, "iPhone 16e": 22.0, "iPhone 15": 16.7, "iPhone 17 Pro Max": 2.9, "iPhone 17e": 1.3, "iPhone 17 Pro": 1.0, "iPhone 13": 1.4}, "MAGALU-CAPITAL RIO": {"iPhone 16": 28.7, "iPhone 17": 24.4, "iPhone 16e": 22.8, "iPhone 15": 17.4, "iPhone 17 Pro Max": 3.0, "iPhone 17e": 1.4, "iPhone 17 Pro": 1.2, "iPhone 13": 0.8}, "MAGALU-BAURU": {"iPhone 16": 23.9, "iPhone 17": 23.6, "iPhone 16e": 27.3, "iPhone 15": 18.8, "iPhone 17 Pro Max": 2.7, "iPhone 17e": 1.6, "iPhone 17 Pro": 0.5, "iPhone 13": 0.7}, "MAGALU-GRANDE RIO": {"iPhone 16": 27.8, "iPhone 17": 27.0, "iPhone 16e": 22.7, "iPhone 15": 16.3, "iPhone 17 Pro Max": 1.7, "iPhone 17e": 1.9, "iPhone 17 Pro": 0.5, "iPhone 13": 1.0}, "MAGALU-RIO PRETO": {"iPhone 16": 22.2, "iPhone 17": 29.3, "iPhone 16e": 20.6, "iPhone 15": 20.1, "iPhone 17 Pro Max": 2.1, "iPhone 17e": 0.5, "iPhone 17 Pro": 1.3, "iPhone 13": 1.8}}, "top_sublobs": ["iPhone 16", "iPhone 17", "iPhone 16e", "iPhone 15", "iPhone 17 Pro Max", "iPhone 17e", "iPhone 17 Pro", "iPhone 13"], "top15": {"MAGALU LS 0537 SP ARICANDUVA": 250, "MAGALU LS 0595 S PAULO V GUILHERME": 207, "MAGALU LS 0579 SP SHOP INTERLAGOS": 187, "MAGALU LS 2073 SP GALERIA PAULISTA": 169, "MAGALU LR 0989 FRANCISCO MORATO": 167, "MAGALU LS 0517 SP INTERN. GUARULHOS": 131, "MAGALU LS 0564 SAO PAULO ITAQUERA": 121, "MAGALU LS 0528 SP SHOP UNIAO OSASCO": 90, "MAGALU LR 0542 SP SAO MATHEUS": 89, "MAGALU LS 1553 SHOP CENTER NORTE": 87, "MAGALU LR 0543 SP ITAIM PAULISTA": 77, "MAGALU LS 1562 TIETE PLAZA": 77, "MAGALU LS 1804 SHOP TABOAO": 76, "MAGALU LR 0525 SANTO ANDRE": 75, "MAGALU LR 0958 SP LARGO 13 MAIO": 75}}, "JUNHO": {"total": 0, "modelo_top": "N/A", "modelo_top_val": 0, "pct_npi": 0, "pct_brasil": 0, "territ": {}, "mix": {}, "top_sublobs": ["AirPods (2nd Gen) Wired", "AirPods (2nd Gen) Wireless", "iPhone 13 Pro Max", "iPhone 13 mini", "iPhone 14", "iPhone 14 Plus", "iPhone 14 Pro", "iPhone 14 Pro Max"], "top15": {}}}, "MAGALU-SUL": {"ABRIL": {"total": 3992, "modelo_top": "iPhone 16e", "modelo_top_val": 1182, "pct_npi": 19.4, "pct_brasil": 17.8, "territ": {"MAGALU-PORTO ALEGRE": 897, "MAGALU-FLORIANÓPOLIS": 727, "MAGALU-CAXIAS DO SUL": 708, "MAGALU-CURITIBA": 689, "MAGALU-CHAPECÓ": 644, "MAGALU-LONDRINA": 327}, "mix": {"MAGALU-PORTO ALEGRE": {"iPhone 16e": 30.9, "iPhone 16": 26.4, "iPhone 15": 21.6, "iPhone 17": 12.9, "iPhone 17 Pro Max": 3.3, "iPhone 17e": 1.3, "iPhone 14": 0.2, "iPhone 13": 0.4}, "MAGALU-FLORIANÓPOLIS": {"iPhone 16e": 28.5, "iPhone 16": 24.8, "iPhone 15": 20.6, "iPhone 17": 15.8, "iPhone 17 Pro Max": 4.5, "iPhone 17e": 2.1, "iPhone 14": 1.1, "iPhone 13": 0.4}, "MAGALU-CAXIAS DO SUL": {"iPhone 16e": 31.2, "iPhone 16": 28.2, "iPhone 15": 20.5, "iPhone 17": 13.3, "iPhone 17 Pro Max": 2.3, "iPhone 17e": 1.4, "iPhone 14": 0.7, "iPhone 13": 0.7}, "MAGALU-CURITIBA": {"iPhone 16e": 33.2, "iPhone 16": 29.5, "iPhone 15": 17.4, "iPhone 17": 10.6, "iPhone 17 Pro Max": 2.5, "iPhone 17e": 3.0, "iPhone 14": 1.2, "iPhone 13": 0.9}, "MAGALU-CHAPECÓ": {"iPhone 16e": 25.5, "iPhone 16": 29.0, "iPhone 15": 22.8, "iPhone 17": 16.0, "iPhone 17 Pro Max": 2.0, "iPhone 17e": 2.0, "iPhone 14": 0.8, "iPhone 13": 1.1}, "MAGALU-LONDRINA": {"iPhone 16e": 25.7, "iPhone 16": 30.9, "iPhone 15": 20.2, "iPhone 17": 11.9, "iPhone 17 Pro Max": 4.3, "iPhone 17e": 1.2, "iPhone 14": 1.8, "iPhone 13": 2.1}}, "top_sublobs": ["iPhone 16e", "iPhone 16", "iPhone 15", "iPhone 17", "iPhone 17 Pro Max", "iPhone 17e", "iPhone 14", "iPhone 13"], "top15": {"MAGALU LS 0483 POA SHOP BARRA SUL": 63, "MAGALU LS 0413 POA SHOP IGUATEMI": 61, "MAGALU LR 0301 CHAPECO": 60, "MAGALU LS 1544 CURITIBA  PALLADIUM": 59, "MAGALU LR 0341 VACARIA": 53, "MAGALU LS 1541  JOCKEY PLAZA SHOP": 53, "MAGALU LR 0428 ALVORADA": 50, "MAGALU LR 0409 P ALEGRE FLORES 197": 50, "MAGALU LR 0401 CAXIAS DO SUL CENTRO": 47, "MAGALU LS 0405 CAXIAS DO SUL SHOP": 45, "MAGALU LR 0320 ERECHIM": 45, "MAGALU LS 1542 PARK SHOP BARIGUI": 44, "MAGALU LR 0444 TRAMANDAI": 44, "MAGALU LR 0463 ITAJAI": 44, "MAGALU LR 0375 FELIPE SCHMIDT": 43}}, "MAIO": {"total": 3566, "modelo_top": "iPhone 17", "modelo_top_val": 918, "pct_npi": 32.0, "pct_brasil": 16.5, "territ": {"MAGALU-PORTO ALEGRE": 770, "MAGALU-CAXIAS DO SUL": 667, "MAGALU-FLORIANÓPOLIS": 666, "MAGALU-CURITIBA": 592, "MAGALU-CHAPECÓ": 545, "MAGALU-LONDRINA": 326}, "mix": {"MAGALU-PORTO ALEGRE": {"iPhone 17": 24.8, "iPhone 16e": 26.1, "iPhone 16": 23.1, "iPhone 15": 19.6, "iPhone 17 Pro Max": 2.1, "iPhone 17e": 1.7, "iPhone 13": 0.9, "iPhone 17 Pro": 0.8}, "MAGALU-CAXIAS DO SUL": {"iPhone 17": 27.3, "iPhone 16e": 24.1, "iPhone 16": 25.2, "iPhone 15": 17.8, "iPhone 17 Pro Max": 2.4, "iPhone 17e": 0.9, "iPhone 13": 0.4, "iPhone 17 Pro": 0.7}, "MAGALU-FLORIANÓPOLIS": {"iPhone 17": 25.5, "iPhone 16e": 24.2, "iPhone 16": 22.7, "iPhone 15": 16.8, "iPhone 17 Pro Max": 3.6, "iPhone 17e": 4.4, "iPhone 13": 1.2, "iPhone 17 Pro": 1.1}, "MAGALU-CURITIBA": {"iPhone 17": 21.6, "iPhone 16e": 24.3, "iPhone 16": 23.5, "iPhone 15": 20.1, "iPhone 17 Pro Max": 2.9, "iPhone 17e": 4.9, "iPhone 13": 1.2, "iPhone 17 Pro": 0.8}, "MAGALU-CHAPECÓ": {"iPhone 17": 31.4, "iPhone 16e": 21.8, "iPhone 16": 23.3, "iPhone 15": 18.0, "iPhone 17 Pro Max": 1.5, "iPhone 17e": 1.1, "iPhone 13": 0.7, "iPhone 17 Pro": 1.5}, "MAGALU-LONDRINA": {"iPhone 17": 23.3, "iPhone 16e": 20.6, "iPhone 16": 21.2, "iPhone 15": 19.3, "iPhone 17 Pro Max": 4.9, "iPhone 17e": 1.8, "iPhone 13": 3.7, "iPhone 17 Pro": 1.5}}, "top_sublobs": ["iPhone 17", "iPhone 16e", "iPhone 16", "iPhone 15", "iPhone 17 Pro Max", "iPhone 17e", "iPhone 13", "iPhone 17 Pro"], "top15": {"MAGALU LS 0413 POA SHOP IGUATEMI": 59, "MAGALU LR 0469 CURITIBA CACADAO": 56, "MAGALU LR 0480 CAMAQUA": 55, "MAGALU LS 1541  JOCKEY PLAZA SHOP": 53, "MAGALU LR 0401 CAXIAS DO SUL CENTRO": 51, "MAGALU LR 0463 ITAJAI": 49, "MAGALU LS 1544 CURITIBA  PALLADIUM": 45, "MAGALU LR 0320 ERECHIM": 44, "MAGALU LR 0341 VACARIA": 44, "MAGALU LS 0597 SC SJOSE CONTINENTE": 43, "MAGALU LR 0301 CHAPECO": 43, "MAGALU LS 0405 CAXIAS DO SUL SHOP": 42, "MAGALU LR 0438 PELOTAS": 40, "MAGALU LS 0374 SC FLORIPA SHOPPING": 39, "MAGALU LR 0375 FELIPE SCHMIDT": 39}}, "JUNHO": {"total": 0, "modelo_top": "N/A", "modelo_top_val": 0, "pct_npi": 0, "pct_brasil": 0, "territ": {}, "mix": {}, "top_sublobs": ["AirPods (2nd Gen) Wired", "iPhone 17", "iPhone 14 Pro", "iPhone 14 Pro Max", "iPhone 15", "iPhone 15 Plus", "iPhone 15 Pro", "iPhone 15 Pro Max"], "top15": {}}}, "MAGALU-VIRTUAL": {"ABRIL": {"total": 2224, "modelo_top": "iPhone 16", "modelo_top_val": 702, "pct_npi": 20.6, "pct_brasil": 9.9, "territ": {"MAGALU-BATATAIS": 395, "MAGALU-COSMOPOLIS": 385, "MAGALU-OLÍMPIA": 337, "MAGALU-CAMPO BOM": 324, "MAGALU-BARRA BONITA": 293, "MAGALU-IBIPORA": 264, "MAGALU-SÃO LOURENÇO": 226}, "mix": {"MAGALU-BATATAIS": {"iPhone 16": 32.4, "iPhone 15": 23.0, "iPhone 16e": 17.0, "iPhone 17": 20.3, "iPhone 17 Pro Max": 2.0, "iPhone 13": 1.3, "iPhone 14": 0.5, "iPhone 17e": 0.8}, "MAGALU-COSMOPOLIS": {"iPhone 16": 34.3, "iPhone 15": 17.1, "iPhone 16e": 20.0, "iPhone 17": 16.6, "iPhone 17 Pro Max": 5.2, "iPhone 13": 0.5, "iPhone 14": 1.3, "iPhone 17e": 1.3}, "MAGALU-OLÍMPIA": {"iPhone 16": 33.8, "iPhone 15": 21.4, "iPhone 16e": 19.6, "iPhone 17": 19.3, "iPhone 17 Pro Max": 0.3, "iPhone 13": 1.5, "iPhone 14": 0.9, "iPhone 17e": 1.2}, "MAGALU-CAMPO BOM": {"iPhone 16": 28.4, "iPhone 15": 24.1, "iPhone 16e": 25.9, "iPhone 17": 12.3, "iPhone 17 Pro Max": 2.5, "iPhone 13": 2.2, "iPhone 14": 1.9, "iPhone 17e": 0.6}, "MAGALU-BARRA BONITA": {"iPhone 16": 30.0, "iPhone 15": 20.1, "iPhone 16e": 26.3, "iPhone 17": 14.3, "iPhone 17 Pro Max": 2.4, "iPhone 13": 2.4, "iPhone 14": 1.4, "iPhone 17e": 0.0}, "MAGALU-IBIPORA": {"iPhone 16": 33.7, "iPhone 15": 24.6, "iPhone 16e": 14.8, "iPhone 17": 12.5, "iPhone 17 Pro Max": 1.9, "iPhone 13": 3.8, "iPhone 14": 4.2, "iPhone 17e": 1.5}, "MAGALU-SÃO LOURENÇO": {"iPhone 16": 26.1, "iPhone 15": 22.6, "iPhone 16e": 19.5, "iPhone 17": 16.4, "iPhone 17 Pro Max": 5.3, "iPhone 13": 3.5, "iPhone 14": 3.1, "iPhone 17e": 0.4}}, "top_sublobs": ["iPhone 16", "iPhone 15", "iPhone 16e", "iPhone 17", "iPhone 17 Pro Max", "iPhone 13", "iPhone 14", "iPhone 17e"], "top15": {"MAGALU LV 1526 TREMEMBE": 33, "MAGALU LV 0036 IGARAPAVA": 33, "MAGALU LV 0241 DESCALVADO": 32, "MAGALU LV 0134 GUAXUPE": 30, "MAGALU LV 0636 ARTUR NOGUEIRA": 29, "MAGALU LV 0144 ANDRADAS": 28, "MAGALU LV 0147 PROMISSAO": 26, "MAGALU LV 0037 CASSIA": 25, "MAGALU LV 1149 GARIBALDI": 25, "MAGALU LV 0397 SAO GOTARDO": 25, "MAGALU LV 1124 TEUTONIA": 24, "MAGALU LV 0614 PRATA": 23, "MAGALU LV 0024 ORLANDIA": 22, "MAGALU LV 0634 BROTAS": 22, "MAGALU LV 0139 PENAPOLIS": 22}}, "MAIO": {"total": 2166, "modelo_top": "iPhone 17", "modelo_top_val": 607, "pct_npi": 32.9, "pct_brasil": 10.0, "territ": {"MAGALU-BATATAIS": 387, "MAGALU-OLÍMPIA": 382, "MAGALU-COSMOPOLIS": 379, "MAGALU-CAMPO BOM": 298, "MAGALU-BARRA BONITA": 249, "MAGALU-IBIPORA": 240, "MAGALU-SÃO LOURENÇO": 231}, "mix": {"MAGALU-BATATAIS": {"iPhone 17": 30.5, "iPhone 16": 22.0, "iPhone 16e": 19.4, "iPhone 15": 18.9, "iPhone 13": 2.8, "iPhone 17 Pro Max": 3.6, "iPhone 14": 0.8, "iPhone 17 Pro": 1.6}, "MAGALU-OLÍMPIA": {"iPhone 17": 29.8, "iPhone 16": 20.4, "iPhone 16e": 21.5, "iPhone 15": 19.9, "iPhone 13": 3.1, "iPhone 17 Pro Max": 3.1, "iPhone 14": 0.5, "iPhone 17 Pro": 0.0}, "MAGALU-COSMOPOLIS": {"iPhone 17": 27.2, "iPhone 16": 21.9, "iPhone 16e": 20.1, "iPhone 15": 17.7, "iPhone 13": 2.4, "iPhone 17 Pro Max": 3.4, "iPhone 14": 1.6, "iPhone 17 Pro": 1.6}, "MAGALU-CAMPO BOM": {"iPhone 17": 25.8, "iPhone 16": 17.1, "iPhone 16e": 26.5, "iPhone 15": 18.8, "iPhone 13": 5.4, "iPhone 17 Pro Max": 1.0, "iPhone 14": 1.7, "iPhone 17 Pro": 1.3}, "MAGALU-BARRA BONITA": {"iPhone 17": 28.5, "iPhone 16": 19.7, "iPhone 16e": 21.3, "iPhone 15": 20.1, "iPhone 13": 3.2, "iPhone 17 Pro Max": 1.6, "iPhone 14": 1.2, "iPhone 17 Pro": 1.2}, "MAGALU-IBIPORA": {"iPhone 17": 30.0, "iPhone 16": 22.1, "iPhone 16e": 17.1, "iPhone 15": 20.4, "iPhone 13": 2.5, "iPhone 17 Pro Max": 4.6, "iPhone 14": 1.2, "iPhone 17 Pro": 0.0}, "MAGALU-SÃO LOURENÇO": {"iPhone 17": 22.5, "iPhone 16": 26.8, "iPhone 16e": 20.8, "iPhone 15": 17.3, "iPhone 13": 5.6, "iPhone 17 Pro Max": 2.6, "iPhone 14": 1.7, "iPhone 17 Pro": 1.3}}, "top_sublobs": ["iPhone 17", "iPhone 16", "iPhone 16e", "iPhone 15", "iPhone 13", "iPhone 17 Pro Max", "iPhone 14", "iPhone 17 Pro"], "top15": {"MAGALU LV 0144 ANDRADAS": 43, "MAGALU LV 0636 ARTUR NOGUEIRA": 41, "MAGALU LV 0134 GUAXUPE": 35, "MAGALU LV 1149 GARIBALDI": 29, "MAGALU LV 0139 PENAPOLIS": 29, "MAGALU LV 0024 ORLANDIA": 29, "MAGALU LV 0143 SAO LOURENCO": 24, "MAGALU LV 0689 LAPA CENTRO": 24, "MAGALU LV 0045 LEME": 23, "MAGALU LV 0397 SAO GOTARDO": 22, "MAGALU LV 0147 PROMISSAO": 21, "MAGALU LV 0273 PITANGUEIRAS": 21, "MAGALU LV 1526 TREMEMBE": 21, "MAGALU LV 0250 BARRINHA": 20, "MAGALU LV 0266 PEREIRA BARRETO": 20}}, "JUNHO": {"total": 0, "modelo_top": "N/A", "modelo_top_val": 0, "pct_npi": 0, "pct_brasil": 0, "territ": {}, "mix": {}, "top_sublobs": ["AirPods (2nd Gen) Wired", "iPhone 14", "iPhone 14 Pro", "iPhone 14 Pro Max", "iPhone 15", "iPhone 15 Pro", "iPhone 15 Pro Max", "iPhone 16"], "top15": {}}}};
+const TABS = ["MAGALU BRASIL", "MAGALU-MG/CO", "MAGALU-N/NE", "MAGALU-SP/RJ", "MAGALU-SUL", "MAGALU-VIRTUAL"];
+const MES_LABEL = {'ABRIL':'Abril/26','MAIO':'Maio/26','JUNHO':'Junho/26'};
+const COLORS = ["#0071e3", "#34c759", "#ff9500", "#ff3b30", "#af52de", "#5ac8fa", "#ffcc00", "#ff6b35", "#8e8e93", "#30b0c7"];
+
+let activeMes = 'ABRIL';
+let charts = {};
+
+function tabId(t){ return t.replace(/ /g,'-').replace(/\//g,'-'); }
+
+function fmt(n){ return n.toLocaleString('pt-BR'); }
+
+function updatePanel(tab, mes) {
+  const tid = tabId(tab);
+  const d = DATA[tab] && DATA[tab][mes];
+  if (!d) return;
+
+  // Badge
+  const b = document.getElementById('badge-mes-'+tid);
+  if(b) b.textContent = MES_LABEL[mes];
+
+  // Bullets
+  document.getElementById('b-total-'+tid).textContent = fmt(d.total);
+  document.getElementById('b-modelo-'+tid).textContent = d.modelo_top;
+  document.getElementById('b-modelo-val-'+tid).textContent = fmt(d.modelo_top_val)+' un';
+  document.getElementById('b-pctbr-'+tid).textContent = (tab==='MAGALU BRASIL'?'100':d.pct_brasil)+'%';
+  document.getElementById('b-npi-'+tid).textContent = d.pct_npi+'%';
+
+  // Chart Territ (bar)
+  const territs = Object.keys(d.territ).slice(0,20);
+  const vals = territs.map(t=>d.territ[t]);
+  const labels = territs.map(t=>t.replace('MAGALU-','').replace('MAGALU ',''));
+  renderBar('chart-territ-'+tid, labels, vals, '#0071e3', 'Vendas (un)');
+
+  // Chart Mix (stacked 100%)
+  const mixTerrits = Object.keys(d.mix).slice(0,15);
+  const mixLabels = mixTerrits.map(t=>t.replace('MAGALU-','').replace('MAGALU ',''));
+  const datasets = d.top_sublobs.map((sl,i)=>{
+    return {
+      label: sl,
+      data: mixTerrits.map(t => (d.mix[t] && d.mix[t][sl]) ? d.mix[t][sl] : 0),
+      backgroundColor: COLORS[i % COLORS.length],
+      borderWidth: 0,
+    };
+  });
+  renderStackedBar('chart-mix-'+tid, mixLabels, datasets);
+
+  // Table top 15
+  const tbody = document.getElementById('tbl-'+tid);
+  if(tbody) {
+    const rows = Object.entries(d.top15);
+    tbody.innerHTML = rows.map(([name,val],i) => {
+      const rclass = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+      return `<tr><td><span class="rank ${rclass}">${i+1}</span></td><td>${name}</td><td>${fmt(val)}</td></tr>`;
+    }).join('');
+  }
+}
+
+function renderBar(canvasId, labels, data, color, ylabel) {
+  const ctx = document.getElementById(canvasId);
+  if(!ctx) return;
+  if(charts[canvasId]) charts[canvasId].destroy();
+  charts[canvasId] = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{ label:ylabel, data, backgroundColor:color+'cc', borderColor:color, borderWidth:1, borderRadius:4 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx => ctx.parsed.y.toLocaleString('pt-BR')+' un' } } },
+      scales:{
+        x:{ ticks:{ font:{size:9}, maxRotation:45 }, grid:{display:false} },
+        y:{ ticks:{ font:{size:10}, callback: v=>v.toLocaleString('pt-BR') }, grid:{color:'#f0f0f0'} }
+      }
+    }
+  });
+}
+
+function renderStackedBar(canvasId, labels, datasets) {
+  const ctx = document.getElementById(canvasId);
+  if(!ctx) return;
+  if(charts[canvasId]) charts[canvasId].destroy();
+  charts[canvasId] = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ font:{size:9}, boxWidth:10, padding:6 } }, tooltip:{ callbacks:{ label: ctx => ctx.dataset.label+': '+ctx.parsed.y.toFixed(1)+'%' } } },
+      scales:{
+        x:{ stacked:true, ticks:{ font:{size:9}, maxRotation:45 }, grid:{display:false} },
+        y:{ stacked:true, min:0, max:100, ticks:{ font:{size:10}, callback:v=>v+'%' }, grid:{color:'#f0f0f0'} }
+      }
+    }
+  });
+}
+
+function showTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  // Atualizar painel com mês ativo
+  const tab = TABS.find(t=>tabId(t)===id);
+  if(tab) updatePanel(tab, activeMes);
+}
+
+function showMes(mes, btn) {
+  activeMes = mes;
+  document.querySelectorAll('.mes-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // Atualizar painel ativo
+  const activePanel = document.querySelector('.panel.active');
+  if(activePanel) {
+    const id = activePanel.id.replace('panel-','');
+    const tab = TABS.find(t=>tabId(t)===id);
+    if(tab) updatePanel(tab, mes);
+  }
+}
+
+// Init
+window.addEventListener('DOMContentLoaded', ()=>{
+  TABS.forEach(tab=>updatePanel(tab,'ABRIL'));
+});
+</script>
+</body>
+</html>
